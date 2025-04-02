@@ -8,6 +8,7 @@
 #include<arpa/inet.h>
 #include <cstdio>
 #include <strings.h>
+#include<cstring>
 
 void errif(bool condition,const char* errmsg) {
     if(condition) {
@@ -31,12 +32,9 @@ int main() {
         bzero(&buf,sizeof(buf));
 
         printf("Enter message: ");
-        fgets(buf, sizeof(buf), stdin);
+        scanf("%s",buf);
 
-        size_t len = strlen(buf);
-        if (len > 0 && buf[len - 1] == '\n') {
-            buf[len - 1] = '\0';
-        }
+
 
         size_t write_bytes=write(sockfd,buf,sizeof(buf));
         if (write_bytes == -1) {
