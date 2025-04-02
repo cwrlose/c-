@@ -43,8 +43,10 @@ int main(){
             printf("message from %d : %s\n",clnt_fd,buf);
             write(clnt_fd,buf,sizeof(buf));
         }
-        else if(read_bytes==0) {
-            continue;
+        else if(read_bytes==0) {  
+            printf("Server socket disconnected!\n");
+            break;
+            
         }
         else if (read_bytes == -1)
         {
