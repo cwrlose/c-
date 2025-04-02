@@ -44,7 +44,10 @@ int main(){
             write(clnt_fd,buf,sizeof(buf));
         }
         else if(read_bytes==0) {
-            continue;
+            printf("client fd %d disconnected\n", clnt_fd);
+            close(clnt_fd);
+            break;
+
         }
         else if (read_bytes == -1)
         {
