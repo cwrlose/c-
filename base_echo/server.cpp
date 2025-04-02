@@ -44,8 +44,7 @@ int main(){
             write(clnt_fd,buf,sizeof(buf));
         }
         else if(read_bytes==0) {
-            printf("client fd %d disconnected\n", clnt_fd);
-            close(clnt_fd);
+            printf("Server socket disconnected!\n");
             break;
 
         }
