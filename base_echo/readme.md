@@ -71,7 +71,7 @@ read和write是系统函数(linux系统 即是跨平台不强)
 >
 >read：
 >返回值 > 0：表示成功读取的字节数。例如，返回值为 10，表示成功读取了 10 个字节。
-返回值 = 0：表示已经到达文件末尾（EOF），没有更多数据可读。这通常发生在读取文件时，文件内容已经全部读完。
+返回值 = 0：表示已经到达文件末尾（EOF），没有更多数据可读。这通常发生在读取文件时，文件内容已经全部读完//对于一个socket而言就是关系连接达到末尾。
 返回值 < 0：表示读取操作失败。此时，errno 会被设置为相应的错误码，可以
 通过 write同理
 
@@ -105,7 +105,17 @@ read和write是系统函数(linux系统 即是跨平台不强)
 //业务部分
         char buf[1024];
         bzero(&buf,sizeof(buf));
-        scanf("%s",buf);
+        //scanf("%s",buf);
+       // 使用fgets代替scanf
+        if (fgets(buf, sizeof(buf), stdin) == nullptr) {
+            perror("fgets");
+            break;
+        }
+        // 去掉换行符
+        size_t len = strlen(buf);
+        if (len > 0 && buf[len - 1] == '\n') {
+            buf[len - 1] = '\0';
+        }
         size_t write_bytes=write(sockfd,buf,sizeof(buf));
         if (write_bytes == -1) {
             printf("Socket already disconnected, can't write any more!\n");
@@ -123,7 +133,8 @@ read和write是系统函数(linux系统 即是跨平台不强)
             errif(true, "socket read error");
         }
 ```
-先写后读 服务器断开
+>scanf("%s",buf); 在客户端代码中，你使用了scanf("%s", buf)来读取用户输入。scanf函数的%s格式说明符会读取一个字符串，直到遇到空格或换行符为止。这意味着，如果用户输入的内容包含空格，scanf只会读取到第一个空格之前的字符串，剩下的部分会被丢弃。因此，客户端发送到服务器的数据不包含完整的用户输入内容。
+> 使用fget fgets函数可以读取一行完整的输入，包括空格，直到遇到换行符为止。因此，你可以使用fgets代替scanf来读取用户输入。
 
 ** 运行命令**
 >g++ server.cpp -o server

@@ -22,7 +22,7 @@ int main() {
 
     struct sockaddr_in clnt_addr;
     clnt_addr.sin_family=AF_INET;
-    clnt_addr.sin_port=htons(8080);
+    clnt_addr.sin_port=htons(8888);
     clnt_addr.sin_addr.s_addr=inet_addr("127.0.0.1");
 
     errif(connect(sockfd,(sockaddr*)&clnt_addr,sizeof(clnt_addr))==-1,"socket connect error");
@@ -30,11 +30,17 @@ int main() {
     while(true) {
         char buf[1024];
         bzero(&buf,sizeof(buf));
-
-        printf("Enter message: ");
-        scanf("%s",buf);
-
-
+        //scanf("%s",buf);
+        // 使用fgets代替scanf
+        if (fgets(buf, sizeof(buf), stdin) == nullptr) {
+            perror("fgets");
+            break;
+        }
+        // 去掉换行符
+        size_t len = strlen(buf);
+        if (len > 0 && buf[len - 1] == '\n') {
+            buf[len - 1] = '\0';
+        }
 
         size_t write_bytes=write(sockfd,buf,sizeof(buf));
         if (write_bytes == -1) {
@@ -53,8 +59,7 @@ int main() {
             close(sockfd);
             return 1;
         }
-
-    close(sockfd);
-
     }
+    close(sockfd);
+    return 0;
 }

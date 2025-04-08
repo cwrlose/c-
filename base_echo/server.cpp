@@ -22,7 +22,7 @@ int main(){
     struct sockaddr_in serv_addr;
     serv_addr.sin_addr.s_addr=INADDR_ANY;
     serv_addr.sin_family=AF_INET;
-    serv_addr.sin_port=htons(8080);
+    serv_addr.sin_port=htons(8888);
 
     errif(bind(sockfd,(sockaddr*)&serv_addr,sizeof(serv_addr)),"socket bind error");
     errif(listen(sockfd,SOMAXCONN),"socket listen error");
