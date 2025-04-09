@@ -8,7 +8,7 @@
 #include <sys/epoll.h>
 #include <errno.h>
 #include<stdlib.h>
-
+#define READ_BUFFER 1024
 //错误处理
 void errif(bool condition,const char* errmsg) {
     if(condition){
@@ -18,9 +18,31 @@ void errif(bool condition,const char* errmsg) {
 }
 //非阻塞 异步
 void setnoblock(int fd) {
-    fcntl(fd,F_SETFD,fcntl(fd,F_GETFD|O_NONBLOCK));
+    fcntl(fd,F_SETFL,fcntl(fd,F_GETFD)|O_NONBLOCK);
 }
+void handleReadEvent(int sockfd) {
+    char buf[READ_BUFFER];
+    while(true){    //由于使用非阻塞IO，读取客户端buffer，一次读取buf大小数据，直到全部读取完毕
+        bzero(&buf, sizeof(buf));
+        ssize_t bytes_read = read(sockfd, buf, sizeof(buf));
+        if(bytes_read > 0){
+            printf("message from client fd %d: %s\n", sockfd, buf);
+            write(sockfd, buf, sizeof(buf));
+        } else if(bytes_read == -1 && errno == EINTR){  //客户端正常中断、继续读取
+            printf("continue reading");
+            continue;
+        } else if(bytes_read == -1 && ((errno == EAGAIN) || (errno == EWOULDBLOCK))){//非阻塞IO，这个条件表示数据全部读取完毕
+            printf("finish reading once, errno: %d\n", errno);
+            break;
+        } else if(bytes_read == 0){  //EOF，客户端断开连接
+            printf("EOF, client fd %d disconnected\n", sockfd);
+            close(sockfd);   //关闭socket会自动将文件描述符从epoll树上移除
+            break;
+        }
+    }
 
+
+}
 int main() {
     //绑定
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -67,31 +89,10 @@ int main() {
                 epoll_ctl(epfd,EPOLL_CTL_ADD,clnt_sockfd,&ev);
             }
             else if (events[i].events&EPOLLIN) {
-                while(true)
-                {
-                    //读取
-                    char buf[1024];
-                    bzero(&buf,sizeof(buf));
+                handleReadEvent(events->data.fd);
 
-                    size_t read_bytes=read(events[i].data.fd,buf,sizeof(buf));
-                    if(read_bytes>0) {
-                        printf("Receive from client %d : %s\n",events[i].data.fd,buf);
-                        write(events[i].data.fd,buf,sizeof(buf));
-                    }
-                    else if(read_bytes==-1&&errno == EINTR) {////客户端正常中断、继续读取
-                        printf("continue\n");
-                        continue;
-                    }
-                    else if(read_bytes==-1&& ((errno == EAGAIN) || (errno == EWOULDBLOCK))) {//非阻塞IO，这个条件表示数据全部读取完毕
-                        printf("finish reading once, errno: %d\n", errno);
-                        break;
-                    }
-                    else if(read_bytes == 0){  //EOF，客户端断开连接
-                        printf("EOF, client fd %d disconnected\n", events[i].data.fd);
-                        close(events[i].data.fd);   //关闭socket会自动将文件描述符从epoll树上移除
-                        break;
-                    }
-                }
+
+
             }
             else {
                 printf("something else happened\n");

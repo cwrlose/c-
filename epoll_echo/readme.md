@@ -91,62 +91,8 @@ int nfds=epoll_wait(epfd,events,1024,-1);//等待就绪数组
             }
 
 ```
-检测到可读事件 ,然后进行操作。
-简单讲一下阻塞和非阻塞
->本质上就是一个异步和非异步的问题，只不过阻塞和非阻塞强调的是io部分的异步操作。在非阻塞模式下，I/O 操作不会等待操作完成，而是立即返回。如果数据尚未准备好，返回值会表明操作未完成（如返回 -1 并设置 errno 为 EAGAIN 或 EWOULDBLOC.为啥还有设置其他两个条件。
+检测到可读事件 ,然后进行操作.echo 操作 去看一下base_echo部分
 
-## 客户端
-```
-#include<sys/unistd.h>
-#include<sys/socket.h>
-#include<stdlib.h>
-#include<arpa/inet.h>
-#include <cstdio>
-#include <strings.h>
-#include<cstring>
+客户端没变
 
-void errif(bool condition,const char* errmsg) {
-    if(condition) {
-        perror(errmsg);
-        exit(EXIT_FAILURE);
-    }
-}
-int main() {
-    int sockfd=socket(AF_INET,SOCK_STREAM,0);
-    errif(sockfd==-1,"create socket error");
 
-    struct sockaddr_in clnt_addr;
-    clnt_addr.sin_family=AF_INET;
-    clnt_addr.sin_port=htons(8080);
-    clnt_addr.sin_addr.s_addr=inet_addr("127.0.0.1");
-
-    errif(connect(sockfd,(sockaddr*)&clnt_addr,sizeof(clnt_addr))==-1,"socket connect error");
-
-    while(true) {
-        char buf[1024];
-        bzero(&buf,sizeof(buf));
-
-        printf("Enter message: ");
-        scanf("%s",buf);
-
-        size_t write_bytes=write(sockfd,buf,sizeof(buf));
-        if (write_bytes == -1) {
-            printf("Socket already disconnected, can't write any more!\n");
-            break;
-        }
-
-        ssize_t read_bytes = read(sockfd, buf, sizeof(buf));
-        if (read_bytes > 0) {
-            printf("Message from server: %s\n", buf);
-        } else if (read_bytes == 0) {
-            printf("Server socket disconnected!\n");
-            break;
-        } else {
-            printf("Socket read error\n");
-            errif(true, "socket read error");
-            return 1;
-        }
-
-    close(sockfd);
-
-    }

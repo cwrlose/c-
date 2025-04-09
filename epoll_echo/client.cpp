@@ -30,9 +30,17 @@ int main() {
     while(true) {
         char buf[1024];
         bzero(&buf,sizeof(buf));
-
-        printf("Enter message: ");
-        scanf("%s",buf);
+        //scanf("%s",buf);
+        // 使用fgets代替scanf
+        if (fgets(buf, sizeof(buf), stdin) == nullptr) {
+            perror("fgets");
+            break;
+        }
+        // 去掉换行符
+        size_t len = strlen(buf);
+        if (len > 0 && buf[len - 1] == '\n') {
+            buf[len - 1] = '\0';
+        }
 
         size_t write_bytes=write(sockfd,buf,sizeof(buf));
         if (write_bytes == -1) {
@@ -48,11 +56,10 @@ int main() {
             break;
         } else {
             printf("Socket read error\n");
-            errif(true, "socket read error");
+            close(sockfd);
             return 1;
         }
-
-    close(sockfd);
-
     }
+    close(sockfd);
+    return 0;
 }
